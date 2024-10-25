@@ -34,7 +34,11 @@ param_group_elname = "referenceableParamGroup"
 data_processing_elname = "dataProcessing"
 instrument_confid_elname = "instrumentConfiguration"
 
-
+def _int(val):
+    if 'e' in val:
+        return int(float(val))
+    else:
+        return int(val)
 def choose_iterparse(parse_lib=None):
     if parse_lib == 'ElementTree':
         from xml.etree.ElementTree import iterparse
@@ -46,12 +50,16 @@ def choose_iterparse(parse_lib=None):
 
 
 def _get_cv_param(elem, accession, deep=False, convert=False):
-    base = './/' if deep else ''
-    node = elem.find('%s%scvParam[@accession="%s"]' % (base, XMLNS_PREFIX, accession))
-    if node is not None:
-        if convert:
-            return convert_cv_param(accession, node.get('value'))
-        return node.get('value')
+    try:
+        base = './/' if deep else ''
+        node = elem.find('%s%scvParam[@accession="%s"]' % (base, XMLNS_PREFIX, accession))
+        if node is not None:
+            if convert:
+                return convert_cv_param(accession, node.get('value'))
+            return node.get('value')
+    except:
+        print("Could not find cvParam in element %s  with accession %s" % (elem,accession))
+        return None
 
 
 class ImzMLParser:
@@ -235,18 +243,18 @@ class ImzMLParser:
                 mz_group = e
             elif ref == self.intGroupId:
                 int_group = e
-        self.mzOffsets.append(int(_get_cv_param(mz_group, 'IMS:1000102')))
-        self.mzLengths.append(int(_get_cv_param(mz_group, 'IMS:1000103')))
-        self.intensityOffsets.append(int(_get_cv_param(int_group, 'IMS:1000102')))
-        self.intensityLengths.append(int(_get_cv_param(int_group, 'IMS:1000103')))
+        self.mzOffsets.append(_int(_get_cv_param(mz_group, 'IMS:1000102')))
+        self.mzLengths.append(_int(_get_cv_param(mz_group, 'IMS:1000103')))
+        self.intensityOffsets.append(_int(_get_cv_param(int_group, 'IMS:1000102')))
+        self.intensityLengths.append(_int(_get_cv_param(int_group, 'IMS:1000103')))
         scan_elem = elem.find('%sscanList/%sscan' % (self.sl, self.sl))
         x = _get_cv_param(scan_elem, 'IMS:1000050')
         y = _get_cv_param(scan_elem, 'IMS:1000051')
         z = _get_cv_param(scan_elem, 'IMS:1000052')
         if z is not None:
-            self.coordinates.append((int(x), int(y), int(z)))
+            self.coordinates.append((_int(x), _int(y), _int(z)))
         else:
-            self.coordinates.append((int(x), int(y), 1))
+            self.coordinates.append((_int(x), _int(y), 1))
 
         if include_spectra_metadata == 'full':
             self.spectrum_full_metadata.append(

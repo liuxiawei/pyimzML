@@ -1,3 +1,8 @@
+Attention
+=======
+This package is forked form the original package https://github.com/chhh/pyimzML (1.5.4, accessed in 20241025 ) and is modified with the aim to support the imzML format from Cardinal.
+- support the the number displayed as e exponent (like 1e+9)
+- ignore the the empty cv_param
 pyimzML
 =======
 
